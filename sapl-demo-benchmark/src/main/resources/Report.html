@@ -75,7 +75,7 @@
                 <tr>
                     <th scope="col">Benchmark</th>
                     <th scope="col" class="right">avg ms/op</th>
-                    <th scope="col" class="right">variance ms/op</th>
+                    <th scope="col" class="right">std dev ms/op</th>
                     <th scope="col" class="right">90% ms/op</th>
                     <th scope="col" class="right">95% ms/op</th>
                     <th scope="col" class="right">99% ms/op</th>
@@ -88,10 +88,10 @@
                     <th scope="row">{{row.benchmark}}</th>
                     <td class="right">{{row.score | round(3)}}</td>
                     <td class="right">
-                        {%- if row.error != 'NaN' %}
-                            {{row.error | round(2)}} ({{((row.error/row.score)*100) | round(2)}}%)
+                        {%- if row.stddev != 'NaN' %}
+                            {{row.stddev | round(2)}} ({{((row.stddev/row.score)*100) | round(2)}}%)
                         {% else %}
-                            {{row.error}}
+                            {{row.stddev}}
                         {% endif -%}
                     </td>
                     <td class="right">{{row.pct_90 | round(3)}}</td>
@@ -126,7 +126,7 @@
                     <th scope="col">Benchmark</th>
                     <th scope="col" class="right">threads</th>
                     <th scope="col" class="right">throughput ops/s</th>
-                    <th scope="col" class="right">variance ops/s</th>
+                    <th scope="col" class="right">std dev ops/s</th>
                     <th scope="col">details</th>
                 </tr>
                 </thead>
@@ -137,10 +137,10 @@
                     <td class="right">{{row.threads}}</td>
                     <td class="right">{{row.score | round(2)}}</td>
                     <td class="right">
-                        {%- if row.error != 'NaN' %}
-                            {{row.error | round(2)}} ({{((row.error/row.score)*100) | round(2)}}%)
+                        {%- if row.stddev != 'NaN' %}
+                            {{row.stddev | round(2)}} ({{((row.stddev/row.score)*100) | round(2)}}%)
                         {% else %}
-                            {{row.error}}
+                            {{row.stddev}}
                         {% endif -%}
                     </td>
                     <td>

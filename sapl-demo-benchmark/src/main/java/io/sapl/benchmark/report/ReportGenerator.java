@@ -205,20 +205,23 @@ public class ReportGenerator {
             createDetailLineChart(bechmarkFolder, chartFilePath, benchmarkName + " - response time",
                     runResult.get(primaryMetricField).getAsJsonObject().get("rawData").getAsJsonArray());
 
+            // build entry
+            var entry = new HashMap<String, Object>(){
+                {
+                    put(benchmarkField, benchmarkName);
+                    put("authName", getAuthMethodFromBenchmarkName(benchmarkName));
+                    put(pdpNameField, getPdpFromBenchmarkName(benchmarkName));
+                    put(scoreField, runResult.get(primaryMetricField).getAsJsonObject().get(scoreField).getAsDouble());
+                    put("stddev", getVarianceFromRawData(runResult.get(primaryMetricField).getAsJsonObject().get("rawData").getAsJsonArray()));
+                    put("pct_90", runResult.get(primaryMetricField).getAsJsonObject().get(scorePercentilesField).getAsJsonObject().get("90.0").getAsDouble());
+                    put("pct_95", runResult.get(primaryMetricField).getAsJsonObject().get(scorePercentilesField).getAsJsonObject().get("95.0").getAsDouble());
+                    put("pct_99", runResult.get(primaryMetricField).getAsJsonObject().get(scorePercentilesField).getAsJsonObject().get("99.0").getAsDouble());
+                    put(chartField, chartFilePath);
+                }
+            };
+
             // add table entry
-            var entry = baseData.computeIfAbsent(section, xY -> new ArrayList<>());
-            entry.add(Map.of(benchmarkField, benchmarkName, "authName", getAuthMethodFromBenchmarkName(benchmarkName),
-                    pdpNameField, getPdpFromBenchmarkName(benchmarkName), scoreField,
-                    runResult.get(primaryMetricField).getAsJsonObject().get(scoreField).getAsDouble(), "error",
-                    runResult.get(primaryMetricField).getAsJsonObject().get("scoreError").getAsDouble(), "pct_90",
-                    runResult.get(primaryMetricField).getAsJsonObject().get(scorePercentilesField).getAsJsonObject()
-                            .get("90.0").getAsDouble(),
-                    "pct_95",
-                    runResult.get(primaryMetricField).getAsJsonObject().get(scorePercentilesField).getAsJsonObject()
-                            .get("95.0").getAsDouble(),
-                    "pct_99", runResult.get(primaryMetricField).getAsJsonObject().get(scorePercentilesField)
-                            .getAsJsonObject().get("99.0").getAsDouble(),
-                    chartField, chartFilePath));
+            baseData.computeIfAbsent(section, xY -> new ArrayList<>()).add(entry);
         }
 
         Map<String, Map<String, Object>> resultMap = new HashMap<>(1);
@@ -230,6 +233,34 @@ public class ReportGenerator {
         }
 
         return resultMap;
+    }
+
+    private static Object getVarianceFromRawData(JsonArray rawData) {
+        ArrayList<Double> valueArray = new ArrayList<>();
+
+        for (JsonElement x : rawData) {
+            JsonArray forkResults = x.getAsJsonArray();
+            for (JsonElement entry : forkResults) {
+                valueArray.add(entry.getAsDouble());
+            }
+        }
+        // get the sum of array
+        double sum = 0.0;
+        for (double i : valueArray) {
+            sum += i;
+        }
+
+        // get the mean of array
+        int length = valueArray.size();
+        double mean = sum / length;
+
+        // calculate the standard deviation
+        double standardDeviation = 0.0;
+        for (double num : valueArray) {
+            standardDeviation += Math.pow(num - mean, 2);
+        }
+        standardDeviation = Math.sqrt(standardDeviation / length);
+        return standardDeviation;
     }
 
     private static Map<String, Map<String, Object>> getThroughputContext(String bechmarkFolder) throws IOException {
@@ -252,13 +283,20 @@ public class ReportGenerator {
                 createDetailLineChart(bechmarkFolder, chartFilePath, benchmarkName + " - Throughput",
                         runResult.get(primaryMetricField).getAsJsonObject().get("rawData").getAsJsonArray());
 
+                // build entry
+                var entry = new HashMap<String, Object>(){
+                    {
+                        put(benchmarkField, benchmarkName);
+                        put(pdpNameField, getPdpFromBenchmarkName(benchmarkName));
+                        put("threads", threads);
+                        put(scoreField, runResult.get(primaryMetricField).getAsJsonObject().get(scoreField).getAsDouble());
+                        put("stddev", getVarianceFromRawData(runResult.get(primaryMetricField).getAsJsonObject().get("rawData").getAsJsonArray()));
+                        put(chartField, chartFilePath);
+                    }
+                };
+
                 // add table entry
-                var entry = baseData.computeIfAbsent(section, xY -> new ArrayList<>());
-                entry.add(Map.of(benchmarkField, benchmarkName, pdpNameField, getPdpFromBenchmarkName(benchmarkName),
-                        "threads", threads, scoreField,
-                        runResult.get(primaryMetricField).getAsJsonObject().get(scoreField).getAsDouble(), "error",
-                        runResult.get(primaryMetricField).getAsJsonObject().get("scoreError").getAsDouble(), chartField,
-                        chartFilePath));
+                baseData.computeIfAbsent(section, xY -> new ArrayList<>()).add(entry);
             }
         }
 
